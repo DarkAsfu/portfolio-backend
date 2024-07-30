@@ -20,8 +20,8 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // await client.connect();
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    await client.connect();
+    console.log("Connected to MongoDB!");
 
     const projectsCollection = client.db("ashrafulislamDB").collection("projects");
 
@@ -29,9 +29,14 @@ async function run() {
     await projectsCollection.createIndex({ projectTitle: 1 });
 
     app.get("/projects", async (req, res) => {
-      const cursor = projectsCollection.find().sort({ _id: -1 });
-      const result = await cursor.toArray();
-      res.send(result);
+      try {
+        const cursor = projectsCollection.find().sort({ _id: -1 });
+        const result = await cursor.toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        res.status(500).send("Internal Server Error");
+      }
     });
 
     app.get("/project/:title", async (req, res) => {
@@ -51,15 +56,18 @@ async function run() {
     });
 
     app.post("/projects", async (req, res) => {
-      const project = req.body;
-      const result = await projectsCollection.insertOne(project);
-      res.send(result);
-      console.log(result);
+      try {
+        const project = req.body;
+        const result = await projectsCollection.insertOne(project);
+        res.send(result);
+        console.log(result);
+      } catch (error) {
+        console.error("Error adding project:", error);
+        res.status(500).send("Internal Server Error");
+      }
     });
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // Uncomment the following line if you want to close the client after the operations
-    // await client.close();
+  } catch (error) {
+    console.error("Error during MongoDB connection:", error);
   }
 }
 
