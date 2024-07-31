@@ -7,6 +7,7 @@ require('dotenv').config();
 app.use(cors());
 app.use(express.json());
 
+
 const uri = `mongodb+srv://ashrafulislam:${process.env.db_pass}@cluster0.gqju11e.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -20,24 +21,15 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // await client.connect();
-    console.log("Connected to MongoDB!");
 
     const projectsCollection = client.db("ashrafulislamDB").collection("projects");
-
-    // Create an index on the projectTitle field
     await projectsCollection.createIndex({ projectTitle: 1 });
 
     app.get("/projects", async (req, res) => {
-      try {
-        const cursor = projectsCollection.find().sort({ _id: -1 });
-        const result = await cursor.toArray();
-        res.send(result);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        res.status(500).send("Internal Server Error");
-      }
-    });
+      const cursor = projectsCollection.find().sort({ _id: -1 });
+      const result = await cursor.toArray();
+      res.send(result);
+    })
 
     app.get("/project/:title", async (req, res) => {
       try {
@@ -56,27 +48,28 @@ async function run() {
     });
 
     app.post("/projects", async (req, res) => {
-      try {
-        const project = req.body;
-        const result = await projectsCollection.insertOne(project);
-        res.send(result);
-        console.log(result);
-      } catch (error) {
-        console.error("Error adding project:", error);
-        res.status(500).send("Internal Server Error");
-      }
-    });
-  } catch (error) {
-    console.error("Error during MongoDB connection:", error);
+      const project = req.body;
+      const result = await projectsCollection.insertOne(project);
+      res.send(result);
+      console.log(result);
+    })
+    // Connect the client to the server	(optional starting in v4.7)
+    // await client.connect();
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } finally {
+    // Ensures that the client will close when you finish/error
+    // await client.close();
   }
 }
-
 run().catch(console.dir);
 
+
 app.get('/', (req, res) => {
-  res.send('Server is running');
-});
+  res.send('server is running');
+})
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
-});
+})
