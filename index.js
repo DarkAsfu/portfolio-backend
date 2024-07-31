@@ -23,7 +23,7 @@ async function run() {
   try {
 
     const projectsCollection = client.db("ashrafulislamDB").collection("projects");
-    // await projectsCollection.createIndex({ projectTitle: 1 });
+    await projectsCollection.createIndex({ projectTitle: 1 });
 
     app.get("/projects", async (req, res) => {
       const cursor = projectsCollection.find().sort({ _id: -1 });
@@ -31,21 +31,21 @@ async function run() {
       res.send(result);
     })
 
-    // app.get("/project/:title", async (req, res) => {
-    //   try {
-    //     const title = req.params.title;
-    //     const query = { projectTitle: title }; // Use title directly as a string
-    //     const result = await projectsCollection.findOne(query);
-    //     if (result) {
-    //       res.status(200).json(result);
-    //     } else {
-    //       res.status(404).send("Project not found");
-    //     }
-    //   } catch (error) {
-    //     console.error("Error fetching project:", error);
-    //     res.status(500).send("Internal Server Error");
-    //   }
-    // });
+    app.get("/project/:title", async (req, res) => {
+      try {
+        const title = req.params.title;
+        const query = { projectTitle: title }; // Use title directly as a string
+        const result = await projectsCollection.findOne(query);
+        if (result) {
+          res.status(200).json(result);
+        } else {
+          res.status(404).send("Project not found");
+        }
+      } catch (error) {
+        console.error("Error fetching project:", error);
+        res.status(500).send("Internal Server Error");
+      }
+    });
 
     app.post("/projects", async (req, res) => {
       const project = req.body;
