@@ -46,7 +46,20 @@ async function run() {
         res.status(500).send("Internal Server Error");
       }
     });
-
+    app.get('/projects/:categories', async (req, res) => {
+      try {
+          const categories = (req.params.categories);
+          if (categories === 'mern' || categories === 'react' || categories === 'backend') {
+              const result = await projectsCollection.find({ categories }).sort({ _id: -1 }).toArray();
+              res.status(200).json(result);
+          } else {
+              res.status(404).send("Invalid categories");
+          }
+      } catch (error) {
+          console.error("Error fetching project by categories:", error);
+          res.status(500).send("Internal Server Error");
+      }
+  });
     app.post("/projects", async (req, res) => {
       const project = req.body;
       const result = await projectsCollection.insertOne(project);
