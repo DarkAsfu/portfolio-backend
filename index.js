@@ -26,7 +26,7 @@ async function run() {
     await projectsCollection.createIndex({ projectTitle: 1 });
 
     app.get("/projects", async (req, res) => {
-      const cursor = projectsCollection.find().sort({ _id: -1 });
+      const cursor = projectsCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     })
