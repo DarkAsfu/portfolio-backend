@@ -7,7 +7,6 @@ require('dotenv').config();
 app.use(cors());
 app.use(express.json());
 
-
 const uri = `mongodb+srv://ashrafulislam:${process.env.db_pass}@cluster0.gqju11e.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -21,6 +20,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    await client.connect(); // Connect once when the server starts
 
     const projectsCollection = client.db("ashrafulislamDB").collection("projects");
     await projectsCollection.createIndex({ projectTitle: 1 });
@@ -29,12 +29,12 @@ async function run() {
       const cursor = projectsCollection.find();
       const result = await cursor.toArray();
       res.send(result);
-    })
+    });
 
     app.get("/project/:title", async (req, res) => {
       try {
         const title = req.params.title;
-        const query = { projectTitle: title }; // Use title directly as a string
+        const query = { projectTitle: title };
         const result = await projectsCollection.findOne(query);
         if (result) {
           res.status(200).json(result);
@@ -46,43 +46,43 @@ async function run() {
         res.status(500).send("Internal Server Error");
       }
     });
+
     app.get('/projects/:categories', async (req, res) => {
       try {
-          const categories = (req.params.categories);
-          if (categories === 'mern' || categories === 'react' || categories === 'backend') {
-              const result = await projectsCollection.find({ categories }).sort({ _id: -1 }).toArray();
-              res.status(200).json(result);
-          } else {
-              res.status(404).send("Invalid categories");
-          }
+        const categories = req.params.categories;
+        if (categories === 'mern' || categories === 'react' || categories === 'backend') {
+          const result = await projectsCollection.find({ categories }).sort({ _id: -1 }).toArray();
+          res.status(200).json(result);
+        } else {
+          res.status(404).send("Invalid categories");
+        }
       } catch (error) {
-          console.error("Error fetching project by categories:", error);
-          res.status(500).send("Internal Server Error");
+        console.error("Error fetching project by categories:", error);
+        res.status(500).send("Internal Server Error");
       }
-  });
+    });
+
     app.post("/projects", async (req, res) => {
       const project = req.body;
       const result = await projectsCollection.insertOne(project);
       res.send(result);
       console.log(result);
-    })
-    // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
-    // Send a ping to confirm a successful connection
+    });
+
+    // Ping to confirm successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
   }
 }
-run().catch(console.dir);
 
+run().catch(console.dir);
 
 app.get('/', (req, res) => {
   res.send('server is running');
-})
+});
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
-})
+});
